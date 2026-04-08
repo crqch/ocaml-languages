@@ -17,7 +17,7 @@ let rec prompt () =
   | s -> s
 
 let rec repl () =
-  prompt () |> Let.Eval.interp |> print_int |> repl
+  prompt () |> Let.Eval.interp |> Let.Eval.print_value |> repl
 
 let () =
   welcome ();
