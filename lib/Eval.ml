@@ -20,44 +20,34 @@ let eval_op (op : bop) (l : value) (r : value) : value =
   | Sub, VInt l, VInt r  -> VInt (l - r)
   | _ -> failwith "type error"
 
-let reify (v : value) : expr =
-  match v with
-  | VInt a -> Int a
-  | VBool a -> Bool a
+module M = Map.Make(String)
 
-let rec subst (x : ident) (v : value) (e : expr) : expr =
-  match e with
-  | Int _ -> e
-  | Binop (op, l, r) ->
-      Binop (op, subst x v l, subst x v r)
-  | Bool _ -> e
-  | If (b, t, e) ->
-      If (subst x v b, subst x v t, subst x v e)
-  | Let (y, e1, e2) ->
-      if x = y
-        then Let (y, subst x v e1, e2)
-        else Let (y, subst x v e1, subst x v e2)
-  | Var y ->
-      if x = y
-        then reify v
-        else e
+type env = value M.t
 
-let rec eval (e : expr) : value =
+let empty_env  = M.empty
+
+let rec eval (env : env) (e : expr) : value =
   match e with
   | Int a -> VInt a
-  | Binop (op, l, r) -> eval_op op (eval l) (eval r)
+  | Binop (op, l, r) -> eval_op op (eval env l) (eval env r)
   | Bool b -> VBool b
   | If (b, t, e) ->
-      (match eval b with
-        | VBool true -> eval t
-        | VBool false -> eval e
+      (match eval env b with
+        | VBool true -> eval env t
+        | VBool false -> eval env e
         | _ -> failwith "type error")
   | Let (x, e1, e2) ->
-      eval (subst x (eval e1) e2)
-  | Var y -> failwith ("unknown var " ^ y)
+      let v1 = eval env e1 in
+      let env' = M.add x v1 env in
+      let v2 = eval env' e2 in
+      v2
+  | Var y ->
+      (match M.find_opt y env with
+       | Some v -> v
+       | None -> failwith ("unknown var " ^ y))
 
 let interp (s : string) : value =
   let ast =
     Parser.main Lexer.read (Lexing.from_string s)
   in
-  eval ast
+  eval empty_env ast
