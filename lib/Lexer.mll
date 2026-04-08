@@ -13,7 +13,6 @@ rule read =
   | "+" { ADD }
   | "-" { SUB }
   | "/" { DIV }
-  | "neg" { NEG }
   | number { INT (Lexing.lexeme lexbuf
                   |> int_of_string) }
   | "(" { LPAR }

@@ -11,7 +11,6 @@ let rec eval (e : expr) : int =
   match e with
   | Int a -> a
   | Binop (op, l, r) -> eval_op op (eval l) (eval r)
-  | Neg e -> 0 - eval e
 
 let interp (s : string) : int =
   let ast =

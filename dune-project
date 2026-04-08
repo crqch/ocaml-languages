@@ -7,21 +7,15 @@
 (source
  (github username/reponame))
 
-(authors "Author Name <author@example.com>")
+(authors "Maciej Piróg <mpirog@cs.uni.wroc.pl>")
 
-(maintainers "Maintainer Name <maintainer@example.com>")
-
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+(license "MIT")
 
 (package
  (name calc)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml)
- (tags
-  ("add topics" "to describe" your project)))
+ (synopsis "Interpreter jezyka CALC")
+ (description "Interpreter jezyka CALC (wyrażenia arytmetyczne)")
+ (depends ocaml))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html
 
