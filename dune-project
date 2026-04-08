@@ -1,6 +1,6 @@
 (lang dune 3.21)
 
-(name calc)
+(name let)
 
 (generate_opam_files true)
 
@@ -12,9 +12,9 @@
 (license "MIT")
 
 (package
- (name calc)
- (synopsis "Interpreter jezyka CALC")
- (description "Interpreter jezyka CALC (wyrażenia arytmetyczne)")
+ (name let)
+ (synopsis "Interpreter jezyka LET")
+ (description "Interpreter jezyka LET")
  (depends ocaml))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/reference/dune-project/index.html

@@ -1,4 +1,4 @@
 (executable
- (public_name calc)
+ (public_name let)
  (name main)
- (libraries calc))
+ (libraries let))

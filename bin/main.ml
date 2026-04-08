@@ -1,10 +1,11 @@
 let welcome () =
   print_string
 {|
- ####   ###   #      ####
-#      #   #  #     #
-#      #####  #     #
- ####  #   #  #####  ####
+  #     ####  #####
+  #     #       #
+  #     ###     #
+  #     #       #
+  ####  ####    #
 |}
 
 let rec prompt () =
@@ -16,7 +17,7 @@ let rec prompt () =
   | s -> s
 
 let rec repl () =
-  prompt () |> Calc.Eval.interp |> print_int |> repl
+  prompt () |> Let.Eval.interp |> print_int |> repl
 
 let () =
   welcome ();
