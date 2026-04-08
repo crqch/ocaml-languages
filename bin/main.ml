@@ -17,7 +17,11 @@ let rec prompt () =
   | s -> s
 
 let rec repl () =
-  prompt () |> Let.Eval.interp |> Let.Eval.print_value |> repl
+  try
+    prompt () |> Let.Eval.interp |> Let.Eval.print_value |> repl
+  with
+  | Failure msg -> print_string ("FAILED: " ^ msg) |> repl
+  | Division_by_zero -> print_string ("FAILED: division by zero") |> repl
 
 let () =
   welcome ();

@@ -20,11 +20,14 @@ let eval_op (op : bop) (l : value) (r : value) : value =
   | Sub, VInt l, VInt r  -> VInt (l - r)
   | _ -> failwith "type error"
 
-module M = Map.Make(String)
+module Env : sig
+  type 'a t
+  val empty : 'a t
+  val add : string -> 'a -> 'a t -> 'a t
+  val find_opt : string -> 'a t -> 'a option
+end = Map.Make(String)
 
-type env = value M.t
-
-let empty_env  = M.empty
+type env = value Env.t
 
 let rec eval (env : env) (e : expr) : value =
   match e with
@@ -38,11 +41,11 @@ let rec eval (env : env) (e : expr) : value =
         | _ -> failwith "type error")
   | Let (x, e1, e2) ->
       let v1 = eval env e1 in
-      let env' = M.add x v1 env in
+      let env' = Env.add x v1 env in
       let v2 = eval env' e2 in
       v2
   | Var y ->
-      (match M.find_opt y env with
+      (match Env.find_opt y env with
        | Some v -> v
        | None -> failwith ("unknown var " ^ y))
 
@@ -50,4 +53,4 @@ let interp (s : string) : value =
   let ast =
     Parser.main Lexer.read (Lexing.from_string s)
   in
-  eval empty_env ast
+  eval Env.empty ast
