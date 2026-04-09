@@ -54,6 +54,29 @@ let rec eval (env : env) (e : expr) : value =
       | VPair(a, b) ->
         eval (Env.(env |> add y b |> add x a)) e
       | _ -> failwith "match not implemented on types other than pairs!")
+  | Sum (x,n,m,k) ->
+    (
+      match eval env n with
+      | VInt(n) ->
+        (
+          match eval env m with
+          | VInt(m) ->
+            (
+              let rec sm i acc =
+                if i=m+1 then Some(VInt(acc))
+                else (match eval (Env.add x (VInt i) env) k with
+                | VInt(res) -> sm (i+1) (res+acc)
+                | _ -> None
+                )
+              in match sm n 0 with
+              | Some(v) -> v
+              | None -> failwith "SUM expression was evaluated to a non integer value!"
+            )
+          | _ -> failwith "m in SUM must evaluate to an integer value!"
+        )
+        | _ -> failwith "n in SUM must evaluate to an integer value!"
+
+    )
   | Var y ->
       (match Env.find_opt y env with
        | Some v -> v
