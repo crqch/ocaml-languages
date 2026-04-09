@@ -24,13 +24,13 @@ rule read =
   | "/" { DIV }
   | "fst" { FST }
   | "snd" { SND }
+  | "match" { MATCH }
+  | "with" { WITH }
+  | "->" { ARR_TO }
   | number { INT (Lexing.lexeme lexbuf
                   |> int_of_string) }
   | ident { IDENT (Lexing.lexeme lexbuf) }
   | "," { COMMA }
   | "(" { LPAR }
   | ")" { RPAR }
-  | ident { IDENT (Lexing.lexeme lexbuf) }
-  | number { INT (Lexing.lexeme lexbuf
-                  |> int_of_string) }
   | eof { EOF }

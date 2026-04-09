@@ -7,6 +7,8 @@
 %token COMMA
 %token FST SND
 %token LPAR RPAR
+%token MATCH WITH
+%token ARR_TO
 %token TRUE FALSE IF THEN ELSE
 %token <string> IDENT
 %token LET EQ IN
@@ -25,6 +27,7 @@ main:
 
 mixfix:
   | IF; e1 = mixfix; THEN; e2 = mixfix; ELSE; e3 = mixfix { If (e1,e2,e3) }
+  | MATCH; p = expr; WITH; LPAR; x = IDENT; COMMA; y = IDENT; RPAR; ARR_TO; e = expr { Match (p, x, y, e) }
   | LET; i = IDENT; EQ; e1 = mixfix; IN; e2 = mixfix { Let (i, e1, e2) }
   | e = expr { e }
   ;

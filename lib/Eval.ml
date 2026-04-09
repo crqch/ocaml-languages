@@ -49,6 +49,11 @@ let rec eval (env : env) (e : expr) : value =
       let env' = Env.add x v1 env in
       let v2 = eval env' e2 in
       v2
+  | Match (p, x, y, e) ->
+    (match eval env p with
+      | VPair(a, b) ->
+        eval (Env.(env |> add y b |> add x a)) e
+      | _ -> failwith "match not implemented on types other than pairs!")
   | Var y ->
       (match Env.find_opt y env with
        | Some v -> v
