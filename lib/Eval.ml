@@ -3,11 +3,13 @@ open Ast
 type value =
   | VInt of int
   | VBool of bool
+  | VUnit
 
 let show_value (v : value) : string =
   match v with
   | VInt a -> string_of_int a
   | VBool b -> string_of_bool b
+  | VUnit -> "()"
 
 let print_value (v : value) : unit =
   v |> show_value |> print_string
@@ -48,6 +50,7 @@ let rec eval (env : env) (e : expr) : value =
       (match Env.find_opt y env with
        | Some v -> v
        | None -> failwith ("unknown var " ^ y))
+  | Unit -> VUnit
 
 let interp (s : string) : value =
   let ast =

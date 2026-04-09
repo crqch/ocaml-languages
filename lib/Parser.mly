@@ -36,5 +36,6 @@ expr:
   | l = expr; DIV; r = expr { Binop (Div, l, r) }
   | l = expr; ADD; r = expr { Binop (Add, l, r) }
   | l = expr; SUB; r = expr { Binop (Sub, l, r) }
+  | LPAR; RPAR { Unit }
   | LPAR; e = mixfix; RPAR { e }
   ;
