@@ -8,6 +8,7 @@
 %token FST SND
 %token LPAR RPAR
 %token MATCH WITH
+%token SUM TO
 %token ARR_TO
 %token TRUE FALSE IF THEN ELSE
 %token <string> IDENT
@@ -29,6 +30,7 @@ mixfix:
   | IF; e1 = mixfix; THEN; e2 = mixfix; ELSE; e3 = mixfix { If (e1,e2,e3) }
   | MATCH; p = expr; WITH; LPAR; x = IDENT; COMMA; y = IDENT; RPAR; ARR_TO; e = expr { Match (p, x, y, e) }
   | LET; i = IDENT; EQ; e1 = mixfix; IN; e2 = mixfix { Let (i, e1, e2) }
+  | SUM; x = IDENT; EQ; n = expr; TO; m = expr; IN; k = expr { Sum (x, n, m, k) }
   | e = expr { e }
   ;
 

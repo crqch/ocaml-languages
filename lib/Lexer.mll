@@ -26,6 +26,8 @@ rule read =
   | "snd" { SND }
   | "match" { MATCH }
   | "with" { WITH }
+  | "sum" { SUM }
+  | "to" { TO }
   | "->" { ARR_TO }
   | number { INT (Lexing.lexeme lexbuf
                   |> int_of_string) }
