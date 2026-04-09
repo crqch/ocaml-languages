@@ -4,6 +4,8 @@
 
 %token <int> INT
 %token MULT DIV ADD SUB
+%token COMMA
+%token FST SND
 %token LPAR RPAR
 %token TRUE FALSE IF THEN ELSE
 %token <string> IDENT
@@ -31,11 +33,14 @@ expr:
   | i = INT { Int i }
   | TRUE { Bool true }
   | FALSE { Bool false }
+  | FST; p = expr { Fst p }
+  | SND; p = expr { Snd p }
   | i = IDENT { Var i }
   | l = expr; MULT; r = expr { Binop (Mult, l, r) }
   | l = expr; DIV; r = expr { Binop (Div, l, r) }
   | l = expr; ADD; r = expr { Binop (Add, l, r) }
   | l = expr; SUB; r = expr { Binop (Sub, l, r) }
   | LPAR; RPAR { Unit }
+  | LPAR; l = expr; COMMA; r = expr; RPAR { Pair (l, r) }
   | LPAR; e = mixfix; RPAR { e }
   ;

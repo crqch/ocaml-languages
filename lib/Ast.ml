@@ -9,4 +9,7 @@ type expr =
   | Binop of bop * expr * expr
   | Let of ident * expr * expr
   | Var of ident
+  | Pair of expr * expr
+  | Fst of expr
+  | Snd of expr
   | Unit

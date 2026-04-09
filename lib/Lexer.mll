@@ -22,9 +22,12 @@ rule read =
   | "+" { ADD }
   | "-" { SUB }
   | "/" { DIV }
+  | "fst" { FST }
+  | "snd" { SND }
   | number { INT (Lexing.lexeme lexbuf
                   |> int_of_string) }
   | ident { IDENT (Lexing.lexeme lexbuf) }
+  | "," { COMMA }
   | "(" { LPAR }
   | ")" { RPAR }
   | ident { IDENT (Lexing.lexeme lexbuf) }
