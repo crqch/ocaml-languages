@@ -1,0 +1,31 @@
+
+❯ time cat examples/fib_time.fun | _build/default/bin/main.exe
+
+  ####   #    #   ##    #
+  #      #    #   # #   #
+  ###    #    #   #  #  #
+  #      #    #   #   # #
+  #       ####    #    ##
+> 165580141
+> bye!
+
+________________________________________________________
+Executed in   19.98 secs    fish           external
+   usr time   19.94 secs  930.00 micros   19.94 secs
+   sys time    0.00 secs  261.00 micros    0.00 secs
+
+
+
+
+❯ time echo "40" | _build/default/bin/main.exe
+165580141
+
+________________________________________________________
+Executed in  428.51 millis    fish           external
+   usr time  425.75 millis  199.00 micros  425.56 millis
+   sys time    2.06 millis   61.00 micros    2.00 millis
+
+
+utop # time fib 40;;
+ Execution time: 2.409460s
+- : int = 165580141
