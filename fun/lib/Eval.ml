@@ -51,6 +51,29 @@ let eval_op (op : bop) (l : value) (r : value) : value =
   | Leq, VInt l, VInt r -> VBool (l <= r)
   | _ -> failwith "type error"
 
+let free_vars env defs =
+  let rec in_env env expr acc =
+    match expr with
+    | Var y -> ( match Env.find_opt y env with None -> y :: acc | _ -> acc)
+    | Let (x, e1, e2) ->
+        in_env (Env.add x VUnit env) e1 (in_env (Env.add x VUnit env) e2 acc)
+    | Match (e1, ids, e2) ->
+        let e = List.fold_left (fun acc x -> Env.add x VUnit acc) env ids in
+        in_env e e1 (in_env e e2 acc)
+    | Binop (_, l, r) | If (_, l, r) | Pair (l, r) ->
+        in_env env l (in_env env r acc)
+    | Fun (x, e) -> in_env env e acc
+    | Funrec (f, x, e) ->
+        in_env (env |> Env.add x VUnit |> Env.add f VUnit) e acc
+    | _ -> acc
+  in
+  let rec in_defs env xs acc =
+    match xs with
+    | [] -> acc
+    | (i, e) :: xxs -> in_defs (Env.add i VUnit env) xxs (in_env env e [])
+  in
+  in_defs env defs []
+
 let rec eval (env : env) (e : expr) : value =
   match e with
   | Int a -> VInt a
@@ -117,4 +140,9 @@ let eval_prog (env : env) (s : def list) : env = List.fold_left eval_def env s
 
 let interp_prog (env : env) (s : string) : env =
   let defs = Parser.program Lexer.read (Lexing.from_string s) in
-  eval_prog env defs
+  match free_vars env defs with
+  | [] -> eval_prog env defs
+  | xs ->
+      failwith
+        ("Unused variables! "
+        ^ List.fold_left (fun acc x -> x ^ ", " ^ acc) "" xs)
