@@ -10,7 +10,7 @@
 %token <string> IDENT
 %token LET EQ IN
 %token MATCH WITH ARR
-%token FUN FUNREC
+%token FUN FUNREC REC
 %token DEF
 %token EOF
 
@@ -30,14 +30,28 @@ main:
 program:
   | EOF { [] }
   | DEF; i = IDENT; EQ; e = mixfix; p = program { (i, e) :: p }
+  | DEF; i = IDENT; xs = ids; EQ; e = mixfix; p = program { (i, List.fold_right (fun x acc -> Fun(x, acc)) xs e) :: p }
+  | DEF; REC; i = IDENT; xs = ids; EQ; e = mixfix; p = program {
+    (i, Funrec(i, List.hd xs, List.fold_right (fun x acc -> Fun(x, acc)) (List.tl xs) e)) :: p
+  }
   ;
+
+ids:
+  | i = IDENT { [i] }
+  | i = IDENT; rest = ids { i :: rest }
+  ;
+
 
 mixfix:
   | IF; e1 = mixfix; THEN; e2 = mixfix; ELSE; e3 = mixfix { If (e1,e2,e3) }
   | LET; i = IDENT; EQ; e1 = mixfix; IN; e2 = mixfix { Let (i, e1, e2) }
   | MATCH; e1 = mixfix; WITH; LPAR; i1 = IDENT; COMMA; i2 = IDENT; RPAR; ARR; e2 = mixfix { Match (e1, i1, i2, e2) }
-  | FUN; x = IDENT; ARR; e = mixfix { Fun (x, e) }
-  | FUNREC; f = IDENT; x = IDENT; ARR; e = mixfix { Funrec (f, x, e) }
+  | FUN; xs = ids; ARR; e = mixfix {
+    List.fold_right (fun x acc -> Fun (x, acc)) xs e
+  }
+  | FUNREC; f = IDENT; xs = ids; ARR; e = mixfix {
+    Funrec(f, List.hd xs, List.fold_right (fun x acc -> Fun(x, acc)) (List.tl xs) e)
+  }
   | e = expr { e }
   ;
 

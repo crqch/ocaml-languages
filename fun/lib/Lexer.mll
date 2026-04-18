@@ -21,6 +21,7 @@ rule read =
   | "fun" { FUN }
   | "funrec" { FUNREC }
   | "def" { DEF }
+  | "rec" { REC }
   | "->" { ARR }
   | "=" { EQ }
   | "in" { IN }
