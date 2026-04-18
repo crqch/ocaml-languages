@@ -1,6 +1,4 @@
-type bop = Mult | Div | Add | Sub
-         | Eq | Neq | Gt | Geq | Lt | Leq
-
+type bop = Mult | Div | Add | Sub | Eq | Neq | Gt | Geq | Lt | Leq
 type ident = string
 
 type expr =
