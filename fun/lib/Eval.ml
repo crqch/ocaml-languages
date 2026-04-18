@@ -63,12 +63,25 @@ let rec eval (env : env) (e : expr) : value =
       | _ -> failwith "type error")
   | Unit -> VUnit
   | Pair (e1, e2) -> VPair (eval env e1, eval env e2)
-  | Match (e1, x, y, e2) -> (
+  | Match (e1, ids, e2) -> (
       match eval env e1 with
-      | VPair (v1, v2) ->
-          let env' = env |> Env.add x v1 |> Env.add y v2 in
+      | VPair _ as pair_val ->
+          (* Recursywnie przypisujemy identyfikatory do kolejnych struktur pary *)
+          let rec bind_vars ids v current_env =
+            match (ids, v) with
+            | [], _ -> failwith "match error: no identifiers provided"
+            | [ x ], _ ->
+                (* Ostatni identyfikator jest przypisany do ogona krotki *)
+                Env.add x v current_env
+            | x :: xs, VPair (v1, v2) ->
+                (* Przypisz x do lewej strony i kontynuuj odpakowywanie prawej *)
+                let env' = Env.add x v1 current_env in
+                bind_vars xs v2 env'
+            | _ -> failwith "match error: not enough elements in tuple to bind"
+          in
+          let env' = bind_vars ids pair_val env in
           eval env' e2
-      | _ -> failwith "type error")
+      | _ -> failwith "type error: expected a pair to unpack")
   | Let (x, e1, e2) ->
       let v1 = eval env e1 in
       let env' = Env.add x v1 env in

@@ -8,7 +8,7 @@ type expr =
   | Binop of bop * expr * expr
   | Unit
   | Pair of expr * expr
-  | Match of expr * ident * ident * expr
+  | Match of expr * string list * expr
   | Let of ident * expr * expr
   | Var of ident
   | Fun of ident * expr

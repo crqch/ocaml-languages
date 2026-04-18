@@ -41,11 +41,20 @@ ids:
   | i = IDENT; rest = ids { i :: rest }
   ;
 
+tuples:
+  | i = mixfix { i }
+  | i = mixfix; COMMA; rest = tuples { Pair(i, rest) }
+  ;
+
+tuple_idents:
+  | i = IDENT { [i] }
+  | i = IDENT; COMMA; rest = tuple_idents { i :: rest }
+  ;
 
 mixfix:
   | IF; e1 = mixfix; THEN; e2 = mixfix; ELSE; e3 = mixfix { If (e1,e2,e3) }
   | LET; i = IDENT; EQ; e1 = mixfix; IN; e2 = mixfix { Let (i, e1, e2) }
-  | MATCH; e1 = mixfix; WITH; LPAR; i1 = IDENT; COMMA; i2 = IDENT; RPAR; ARR; e2 = mixfix { Match (e1, i1, i2, e2) }
+  | MATCH; e1 = mixfix; WITH; LPAR; ids = tuple_idents; RPAR; ARR; e2 = mixfix { Match (e1, ids, e2) }
   | FUN; xs = ids; ARR; e = mixfix {
     List.fold_right (fun x acc -> Fun (x, acc)) xs e
   }
@@ -80,6 +89,6 @@ base:
   | FALSE { Bool false }
   | i = IDENT { Var i }
   | LPAR; RPAR { Unit }
-  | LPAR; e1 = mixfix; COMMA; e2 = mixfix; RPAR { Pair (e1, e2) }
+  | LPAR; es = tuples; RPAR { es }
   | LPAR; e = mixfix; RPAR { e }
   ;
