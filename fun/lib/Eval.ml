@@ -4,10 +4,21 @@ module Env : sig
   type 'a t
 
   val empty : 'a t
-  val add : string -> 'a -> 'a t -> 'a t
-  val find_opt : string -> 'a t -> 'a option
-end =
-  Map.Make (String)
+  val add : ident -> 'a -> 'a t -> 'a t
+  val mem : ident -> 'a t -> bool
+  val find_opt : ident -> 'a t -> 'a option
+end = struct
+  module M = Map.Make (String)
+
+  type 'a t = 'a M.t
+
+  let empty = M.empty
+  let add k v env = match k with Ident s -> M.add s v env | Wildcard -> env
+  let mem k env = match k with Ident s -> M.mem s env | Wildcard -> false
+
+  let find_opt k env =
+    match k with Ident s -> M.find_opt s env | Wildcard -> None
+end
 
 type env = value Env.t
 
@@ -54,7 +65,10 @@ let eval_op (op : bop) (l : value) (r : value) : value =
 let free_vars env defs =
   let rec in_env env expr acc =
     match expr with
-    | Var y -> ( match Env.find_opt y env with None -> y :: acc | _ -> acc)
+    | Var y -> (
+        match (y, Env.find_opt y env) with
+        | Ident _, None -> y :: acc
+        | _ -> acc)
     | Let (x, e1, e2) ->
         in_env (Env.add x VUnit env) e1 (in_env (Env.add x VUnit env) e2 acc)
     | Match (e1, ids, e2) ->
@@ -62,7 +76,7 @@ let free_vars env defs =
         in_env e e1 (in_env e e2 acc)
     | Binop (_, l, r) | If (_, l, r) | Pair (l, r) ->
         in_env env l (in_env env r acc)
-    | Fun (x, e) -> in_env env e acc
+    | Fun (x, e) -> in_env (Env.add x VUnit env) e acc
     | Funrec (f, x, e) ->
         in_env (env |> Env.add x VUnit |> Env.add f VUnit) e acc
     | _ -> acc
@@ -73,6 +87,51 @@ let free_vars env defs =
     | (i, e) :: xxs -> in_defs (Env.add i VUnit env) xxs (in_env env e [])
   in
   in_defs env defs []
+
+let check_unused_expr expr =
+  let rec uses id expr =
+    match expr with
+    | Var y -> y = id
+    | Let (x, e1, e2) -> uses id e1 || (x <> id && uses id e2)
+    | Match (e1, ids, e2) ->
+        uses id e1 || ((not (List.mem id ids)) && uses id e2)
+    | Binop (_, l, r) | Pair (l, r) | App (l, r) -> uses id l || uses id r
+    | If (e, l, r) -> uses id e || uses id l || uses id r
+    | Fun (x, e) -> x <> id && uses id e
+    | Funrec (f, x, e) -> f <> id && x <> id && uses id e
+    | _ -> false
+  in
+  let rec collect expr acc =
+    match expr with
+    | Let ((Ident x as id), e1, e2) ->
+        let acc' = if not (uses id e2) then x :: acc else acc in
+        collect e1 (collect e2 acc')
+    | Match (e1, ids, e2) ->
+        let acc' =
+          List.fold_left
+            (fun a -> function
+              | Ident x as id -> if not (uses id e2) then x :: a else a
+              | Wildcard -> a)
+            acc ids
+        in
+        collect e1 (collect e2 acc')
+    | Fun ((Ident x as id), e) ->
+        let acc' = if not (uses id e) then x :: acc else acc in
+        collect e acc'
+    | Funrec ((Ident f as idf), (Ident x as idx), e) ->
+        let acc' =
+          (acc |> fun a -> if not (uses idf e) then f :: a else a) |> fun a ->
+          if not (uses idx e) then x :: a else a
+        in
+        collect e acc'
+    | Let (Wildcard, e1, e2) -> collect e1 (collect e2 acc)
+    | Fun (Wildcard, e) -> collect e acc
+    | Funrec (Wildcard, _, e) -> collect e acc
+    | Binop (_, l, r) | If (_, l, r) | Pair (l, r) | App (l, r) ->
+        collect l (collect r acc)
+    | _ -> acc
+  in
+  collect expr []
 
 let rec eval (env : env) (e : expr) : value =
   match e with
@@ -113,7 +172,10 @@ let rec eval (env : env) (e : expr) : value =
   | Var y -> (
       match Env.find_opt y env with
       | Some v -> v
-      | None -> failwith ("unknown var " ^ y))
+      | None -> (
+          match y with
+          | Ident s -> failwith ("unknown var " ^ s)
+          | Wildcard -> failwith "wildcard used as a variable"))
   | Fun (x, e) -> VClosure (env, x, e)
   | Funrec (f, x, e) -> VRecClosure (env, f, x, e)
   | App (e1, e2) -> (
@@ -132,17 +194,29 @@ let interp (env : env) (s : string) : value =
   eval env ast
 
 let eval_def (env : env) ((x, e) : def) : env =
+  let print = function Ident s -> print_endline s | Wildcard -> () in
   let v = eval env e in
-  print_endline x;
+  print x;
   Env.add x v env
 
 let eval_prog (env : env) (s : def list) : env = List.fold_left eval_def env s
 
 let interp_prog (env : env) (s : string) : env =
   let defs = Parser.program Lexer.read (Lexing.from_string s) in
-  match free_vars env defs with
-  | [] -> eval_prog env defs
+  match free_vars env defs |> List.filter (fun id -> not (Env.mem id env)) with
+  | [] ->
+      List.iter
+        (fun (id, expr) ->
+          let unused = check_unused_expr expr in
+          List.iter
+            (fun x -> Printf.printf "Warning: unused variable %s\n" x)
+            unused)
+        defs;
+      eval_prog env defs
   | xs ->
       failwith
         ("Unused variables! "
-        ^ List.fold_left (fun acc x -> x ^ ", " ^ acc) "" xs)
+        ^ List.fold_left
+            (fun acc x ->
+              (match x with Ident s -> s ^ ", " | Wildcard -> "") ^ acc)
+            "" xs)

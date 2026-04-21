@@ -7,6 +7,7 @@
 %token LT LEQ GT GEQ NEQ EQEQ
 %token LPAR RPAR COMMA
 %token TRUE FALSE IF THEN ELSE
+%token WILDCARD
 %token <string> IDENT
 %token LET EQ IN
 %token MATCH WITH ARR
@@ -27,18 +28,23 @@ main:
   | e = mixfix; EOF { e }
   ;
 
+ident:
+  | i = IDENT { Ident i }
+  | WILDCARD { Wildcard }
+  ;
+
 program:
   | EOF { [] }
-  | DEF; i = IDENT; EQ; e = mixfix; p = program { (i, e) :: p }
-  | DEF; i = IDENT; xs = ids; EQ; e = mixfix; p = program { (i, List.fold_right (fun x acc -> Fun(x, acc)) xs e) :: p }
-  | DEF; REC; i = IDENT; xs = ids; EQ; e = mixfix; p = program {
+  | DEF; i = ident; EQ; e = mixfix; p = program { (i, e) :: p }
+  | DEF; i = ident; xs = ids; EQ; e = mixfix; p = program { (i, List.fold_right (fun x acc -> Fun(x, acc)) xs e) :: p }
+  | DEF; REC; i = ident; xs = ids; EQ; e = mixfix; p = program {
     (i, Funrec(i, List.hd xs, List.fold_right (fun x acc -> Fun(x, acc)) (List.tl xs) e)) :: p
   }
   ;
 
 ids:
-  | i = IDENT { [i] }
-  | i = IDENT; rest = ids { i :: rest }
+  | i = ident { [i] }
+  | i = ident; rest = ids { i :: rest }
   ;
 
 tuples:
@@ -47,18 +53,18 @@ tuples:
   ;
 
 tuple_idents:
-  | i = IDENT { [i] }
-  | i = IDENT; COMMA; rest = tuple_idents { i :: rest }
+  | i = ident { [i] }
+  | i = ident; COMMA; rest = tuple_idents { i :: rest }
   ;
 
 mixfix:
   | IF; e1 = mixfix; THEN; e2 = mixfix; ELSE; e3 = mixfix { If (e1,e2,e3) }
-  | LET; i = IDENT; EQ; e1 = mixfix; IN; e2 = mixfix { Let (i, e1, e2) }
+  | LET; i = ident; EQ; e1 = mixfix; IN; e2 = mixfix { Let (i, e1, e2) }
   | MATCH; e1 = mixfix; WITH; LPAR; ids = tuple_idents; RPAR; ARR; e2 = mixfix { Match (e1, ids, e2) }
   | FUN; xs = ids; ARR; e = mixfix {
     List.fold_right (fun x acc -> Fun (x, acc)) xs e
   }
-  | FUNREC; f = IDENT; xs = ids; ARR; e = mixfix {
+  | FUNREC; f = ident; xs = ids; ARR; e = mixfix {
     Funrec(f, List.hd xs, List.fold_right (fun x acc -> Fun(x, acc)) (List.tl xs) e)
   }
   | e = expr { e }
@@ -87,7 +93,7 @@ base:
   | i = INT { Int i }
   | TRUE { Bool true }
   | FALSE { Bool false }
-  | i = IDENT { Var i }
+  | i = ident { Var i }
   | LPAR; RPAR { Unit }
   | LPAR; es = tuples; RPAR { es }
   | LPAR; e = mixfix; RPAR { e }

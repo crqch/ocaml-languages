@@ -1,5 +1,5 @@
 type bop = Mult | Div | Add | Sub | Eq | Neq | Gt | Geq | Lt | Leq
-type ident = string
+type ident = Ident of string | Wildcard
 
 type expr =
   | Int of int
@@ -8,7 +8,7 @@ type expr =
   | Binop of bop * expr * expr
   | Unit
   | Pair of expr * expr
-  | Match of expr * string list * expr
+  | Match of expr * ident list * expr
   | Let of ident * expr * expr
   | Var of ident
   | Fun of ident * expr

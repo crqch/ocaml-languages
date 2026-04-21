@@ -35,6 +35,7 @@ rule read =
   | "<=" { LEQ }
   | "<>" { NEQ }
   | "==" { EQEQ }
+  | "_" { WILDCARD }
   | number { INT (Lexing.lexeme lexbuf
                   |> int_of_string) }
   | ident { IDENT (Lexing.lexeme lexbuf) }
