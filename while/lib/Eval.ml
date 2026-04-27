@@ -82,8 +82,46 @@ let rec exec (s : stmt) (m : memory) : memory =
        | VBool true -> exec b m |> exec s
        | _ -> failwith "type error")
 
+let rec pretty_print_expr = function
+  | Int a -> string_of_int a
+  | Bool b -> if b then "true" else "false"
+  | Str s -> "\"" ^ String.escaped s ^ "\""
+  | Binop (op, l, r) ->
+    let op = match op with
+     | Mult -> "*"
+     | Div -> "/"
+     | Add -> "+"
+     | Sub -> "-"
+     | Eq -> "=="
+     | Neq -> "<>"
+     | Gt -> ">"
+     | Geq -> ">="
+     | Lt -> "<"
+     | Leq -> "<="
+    in
+    "(" ^ pretty_print_expr l ^ op ^ pretty_print_expr r ^ ")"
+  | Var x -> x
+
 let parse (s : string) : stmt =
   Parser.main Lexer.read (Lexing.from_string s)
 
 let interp (s : string) : unit =
   ignore (exec (parse s) Memory.empty)
+
+
+let () =
+  (*
+
+  (2 + 3) * x
+
+  *)
+  let my_expr =
+    Ast.Binop(
+      Ast.Mult,
+      Ast.Binop(Ast.Add, Ast.Int 2, Ast.Int 3),
+      Ast.Var "x"
+    )
+  in
+
+  let result = pretty_print_expr my_expr in
+  print_endline ("Pretty printed: " ^ result)
