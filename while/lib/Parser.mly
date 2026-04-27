@@ -7,7 +7,7 @@
 %token <string> STRING
 %token MULT DIV ADD SUB LT LEQ GT GEQ NEQ EQEQ EQ
 %token LPAR RPAR LBRACE RBRACE SC
-%token TRUE FALSE IF ELSE WHILE PRINT SKIP
+%token TRUE FALSE IF ELSE WHILE PRINT SKIP HALT
 %token EOF
 
 %start <Ast.stmt> main
@@ -57,6 +57,7 @@ matched_stmt:
   | PRINT; LPAR; e = expr; RPAR; SC { Print e }
   | LBRACE; s = stmts; RBRACE { s }
   | SKIP; SC { Skip }
+  | HALT; SC { Halt }
   ;
 
 unmatched_stmt:

@@ -17,6 +17,7 @@ rule read =
   | "while" { WHILE }
   | "print" { PRINT }
   | "skip" { SKIP }
+  | "halt" { HALT }
   | "*" { MULT }
   | "+" { ADD }
   | "-" { SUB }

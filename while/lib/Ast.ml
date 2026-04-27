@@ -13,6 +13,7 @@ type expr =
 type stmt =
   | Assign of ident * expr
   | Skip
+  | Halt
   | Cmp of stmt * stmt
   | If of expr * stmt * stmt
   | While of expr * stmt

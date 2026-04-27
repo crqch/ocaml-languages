@@ -57,18 +57,26 @@ let rec eval (e : expr) (m : memory) : value =
       | None -> VInt 0 (* wartość domyślna *)
       end
 
-let rec exec (s : stmt) (m : memory) : memory =
+
+
+type halting =
+  | Normal
+  | Halted
+
+let rec exec (s : stmt) (m : memory): memory * halting =
   match s with
   | Assign (x, e) ->
       let v = eval e m in
-      Memory.add x v m
-  | Skip -> m
+      (Memory.add x v m, Normal)
+  | Skip -> (m, Normal)
   | Cmp (s1, s2) ->
-      m |> exec s1 |> exec s2
+      (match m |> exec s1 with
+      | (m, Halted) as t -> t
+      | (m, Normal) -> exec s2 m)
   | Print e ->
       let v = eval e m in
       print_value v;
-      m
+      (m,Normal)
   | If (p, t, e) ->
       let v = eval p m in
       (match v with
@@ -78,9 +86,12 @@ let rec exec (s : stmt) (m : memory) : memory =
   | While (p, b) ->
       let v = eval p m in
       (match v with
-       | VBool false -> m
-       | VBool true -> exec b m |> exec s
+       | VBool false -> (m,Normal)
+       | VBool true -> (match exec b m with
+         | (m, Halted) as t -> t
+         | (m, Normal) -> exec s m)
        | _ -> failwith "type error")
+  | Halt -> (m, Halted)
 
 let get_prio = function
   | Mult -> 2
@@ -131,6 +142,7 @@ let rec pretty_print (level: int) stmt =
     tabs ^ "if (" ^ ( pretty_print_expr 0 p) ^ ") {\n" ^ (pretty_print (level+1) t)  ^ tabs ^ "} else {\n" ^ (pretty_print (level+1) e) ^ tabs ^ "}\n"
   | While (p, b) ->
     tabs ^ "while (" ^ (pretty_print_expr 0 p) ^ ") {\n" ^ (pretty_print (level+1) b) ^ tabs ^ "}"
+  | Halt -> tabs ^ "halt;\n"
 
 let parse (s : string) : stmt =
   Parser.main Lexer.read (Lexing.from_string s)
