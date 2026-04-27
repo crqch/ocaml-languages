@@ -42,17 +42,28 @@ expr:
   ;
 
 stmt:
+  | s = matched_stmt { s }
+  | s = unmatched_stmt { s }
+  ;
+
+matched_stmt:
   | x = IDENT; EQ; e = expr; SC { Assign (x, e) }
   | x = IDENT; MULT; EQ; e = expr; SC { Assign(x,Binop( Mult, Var x, e )) }
   | x = IDENT; DIV; EQ; e = expr; SC { Assign(x,Binop( Div, Var x, e )) }
   | x = IDENT; ADD; EQ; e = expr; SC { Assign(x,Binop( Add, Var x, e )) }
   | x = IDENT; SUB; EQ; e = expr; SC { Assign(x,Binop( Sub, Var x, e )) }
-  | IF; LPAR; p = expr; RPAR; t = stmt; ELSE; e = stmt { If (p, t, e) }
-  | WHILE; LPAR; p = expr; RPAR; b = stmt { While (p, b) }
+  | IF; LPAR; p = expr; RPAR; t = matched_stmt; ELSE; e = matched_stmt { If (p, t, e) }
+  | WHILE; LPAR; p = expr; RPAR; b = matched_stmt { While (p, b) }
   | PRINT; LPAR; e = expr; RPAR; SC { Print e }
   | LBRACE; s = stmts; RBRACE { s }
   | SKIP; SC { Skip }
   ;
+
+unmatched_stmt:
+  | IF; LPAR; p = expr; RPAR; t = stmt; { If (p, t, Skip) }
+  | IF; LPAR; p = expr; RPAR; t = matched_stmt; ELSE; e = unmatched_stmt { If (p, t, e) }
+  | WHILE; LPAR; p = expr; RPAR; b = unmatched_stmt { While (p, b) }
+  ;;
 
 stmts:
   | { Skip }
