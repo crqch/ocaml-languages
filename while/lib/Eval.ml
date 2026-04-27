@@ -82,12 +82,19 @@ let rec exec (s : stmt) (m : memory) : memory =
        | VBool true -> exec b m |> exec s
        | _ -> failwith "type error")
 
-let rec pretty_print_expr = function
+let get_prio = function
+  | Mult -> 2
+  | Div -> 2
+  | Add -> 1
+  | Sub -> 1
+  | _ -> 0
+
+let rec pretty_print_expr (root_op_prio : int) = function
   | Int a -> string_of_int a
   | Bool b -> if b then "true" else "false"
   | Str s -> "\"" ^ String.escaped s ^ "\""
   | Binop (op, l, r) ->
-    let op = match op with
+    let op_s = match op with
      | Mult -> "*"
      | Div -> "/"
      | Add -> "+"
@@ -99,7 +106,10 @@ let rec pretty_print_expr = function
      | Lt -> "<"
      | Leq -> "<="
     in
-    "(" ^ pretty_print_expr l ^ op ^ pretty_print_expr r ^ ")"
+    let prio = get_prio op in
+    let delta = prio - root_op_prio in
+    let wrap s = if delta >= 0 then s else "(" ^ s ^ ")" in
+    wrap (pretty_print_expr prio l ^ op_s ^ pretty_print_expr (prio + 1) r)
   | Var x -> x
 
 let parse (s : string) : stmt =
@@ -115,13 +125,23 @@ let () =
   (2 + 3) * x
 
   *)
-  let my_expr =
+  (* let my_expr =
     Ast.Binop(
       Ast.Mult,
       Ast.Binop(Ast.Add, Ast.Int 2, Ast.Int 3),
       Ast.Var "x"
     )
-  in
+  in *)
 
-  let result = pretty_print_expr my_expr in
-  print_endline ("Pretty printed: " ^ result)
+
+  (*
+
+  (2 + 3) * x
+
+  *)
+  (* match parse("x = 2 + ((8 + 9) / 42) * 2 / 5;") with *)
+  match parse("x = 1 - (2 - 3);") with
+    | Cmp(Assign(_,e), _) ->
+        let result = pretty_print_expr 0 e in
+        print_endline ("Pretty printed: " ^ result)
+    | _ -> failwith ""
