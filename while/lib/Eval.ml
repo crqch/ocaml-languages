@@ -112,36 +112,31 @@ let rec pretty_print_expr (root_op_prio : int) = function
     wrap (pretty_print_expr prio l ^ op_s ^ pretty_print_expr (prio + 1) r)
   | Var x -> x
 
+let rec tab_repeat i =
+  if i > 0 then "  " ^ tab_repeat (i-1) else ""
+
+let rec pretty_print (level: int) stmt =
+  let tabs = tab_repeat(level) in
+  match stmt with
+  | Assign (x, e) -> tabs ^ x ^ " = " ^ pretty_print_expr 0 e ^ ";\n"
+  | Skip -> tabs ^ "skip;\n"
+  | Cmp (s1, s2) ->
+    if level == 0 then
+   "{\n" ^ pretty_print 1 s1 ^ "\n" ^ pretty_print 1 s2 ^ "}\n"
+   else
+    (pretty_print level s1) ^ (pretty_print level s2)
+  | Print e ->
+    tabs ^ "print(" ^ (pretty_print_expr 0 e) ^ ");\n"
+  | If (p, t, e) ->
+    tabs ^ "if (" ^ ( pretty_print_expr 0 p) ^ ") {\n" ^ (pretty_print (level+1) t)  ^ tabs ^ "} else {\n" ^ (pretty_print (level+1) e) ^ tabs ^ "}\n"
+  | While (p, b) ->
+    tabs ^ "while (" ^ (pretty_print_expr 0 p) ^ ") {\n" ^ (pretty_print (level+1) b) ^ tabs ^ "}"
+
 let parse (s : string) : stmt =
   Parser.main Lexer.read (Lexing.from_string s)
 
 let interp (s : string) : unit =
-  ignore (exec (parse s) Memory.empty)
-
-
-let () =
-  (*
-
-  (2 + 3) * x
-
-  *)
-  (* let my_expr =
-    Ast.Binop(
-      Ast.Mult,
-      Ast.Binop(Ast.Add, Ast.Int 2, Ast.Int 3),
-      Ast.Var "x"
-    )
-  in *)
-
-
-  (*
-
-  (2 + 3) * x
-
-  *)
-  (* match parse("x = 2 + ((8 + 9) / 42) * 2 / 5;") with *)
-  match parse("x = 1 - (2 - 3);") with
-    | Cmp(Assign(_,e), _) ->
-        let result = pretty_print_expr 0 e in
-        print_endline ("Pretty printed: " ^ result)
-    | _ -> failwith ""
+  let ast = parse s in
+  let s1 = pretty_print 0 ast in
+  print_string s1;
+  ignore (exec (parse s1) Memory.empty)
