@@ -2,7 +2,7 @@
   open Ast
 %}
 
-%token <int> INT
+%token <Bigint.t> INT
 %token <string> IDENT
 %token <string> STRING
 %token MULT DIV ADD SUB LT LEQ GT GEQ NEQ EQEQ EQ

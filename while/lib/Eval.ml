@@ -1,7 +1,7 @@
 open Ast
 
 type value =
-  | VInt of int
+  | VInt of Bigint.t
   | VBool of bool
   | VStr of string
 
@@ -16,7 +16,7 @@ type memory = value Memory.t
 
 let rec show_value (v : value) : string =
   match v with
-  | VInt a -> string_of_int a
+  | VInt a -> Bigint.to_string a
   | VBool b -> string_of_bool b
   | VStr s -> s
 
@@ -25,24 +25,24 @@ let print_value (v : value) : unit =
 
 let rec equal_value (v1 : value) (v2 : value) : bool =
   match v1, v2 with
-  | VInt a1, VInt a2 -> Int.equal a1 a2
+  | VInt a1, VInt a2 -> Bigint.equal a1 a2
   | VBool a1, VBool a2 -> Bool.equal a1 a2
   | VStr a1, VStr a2 -> String.equal a1 a2
   | _ -> false
 
 let eval_op (op : bop) (l : value) (r : value) : value =
   match op, l, r with
-  | Mult, VInt l, VInt r -> VInt (l * r)
-  | Div, VInt l, VInt r -> VInt (l / r)
-  | Add, VInt l, VInt r -> VInt (l + r)
+  | Mult, VInt l, VInt r -> VInt (Bigint.(l * r))
+  | Div, VInt l, VInt r -> VInt (Bigint.(l / r))
+  | Add, VInt l, VInt r -> VInt (Bigint.(l + r))
   | Add, VStr l, VStr r -> VStr (l ^ r)
-  | Sub, VInt l, VInt r -> VInt (l - r)
+  | Sub, VInt l, VInt r -> VInt (Bigint.(l - r))
   | Eq, l, r -> VBool (equal_value l r)
   | Neq, l, r -> VBool (equal_value l r |> not)
-  | Gt, VInt l, VInt r -> VBool (l > r)
-  | Geq, VInt l, VInt r -> VBool (l >= r)
-  | Lt, VInt l, VInt r -> VBool (l < r)
-  | Leq, VInt l, VInt r -> VBool (l <= r)
+  | Gt, VInt l, VInt r -> VBool (Bigint.(l > r))
+  | Geq, VInt l, VInt r -> VBool (Bigint.(l >= r))
+  | Lt, VInt l, VInt r -> VBool (Bigint.(l < r))
+  | Leq, VInt l, VInt r -> VBool (Bigint.(l <= r))
   | _ -> failwith "type error"
 
 let rec eval (e : expr) (m : memory) : value =
@@ -54,7 +54,7 @@ let rec eval (e : expr) (m : memory) : value =
   | Var x ->
       begin match Memory.find_opt x m with
       | Some v -> v
-      | None -> VInt 0 (* wartość domyślna *)
+      | None -> VInt Bigint.zero (* wartość domyślna *)
       end
 
 
@@ -101,7 +101,7 @@ let get_prio = function
   | _ -> 0
 
 let rec pretty_print_expr (root_op_prio : int) = function
-  | Int a -> string_of_int a
+  | Int a -> Bigint.to_string a
   | Bool b -> if b then "true" else "false"
   | Str s -> "\"" ^ String.escaped s ^ "\""
   | Binop (op, l, r) ->
@@ -148,7 +148,4 @@ let parse (s : string) : stmt =
   Parser.main Lexer.read (Lexing.from_string s)
 
 let interp (s : string) : unit =
-  let ast = parse s in
-  let s1 = pretty_print 0 ast in
-  print_string s1;
-  ignore (exec (parse s1) Memory.empty)
+  ignore (exec (parse s) Memory.empty)

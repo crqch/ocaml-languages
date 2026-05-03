@@ -4,7 +4,7 @@ type bop = Mult | Div | Add | Sub
 type ident = string
 
 type expr =
-  | Int of int
+  | Int of Bigint.t
   | Bool of bool
   | Str of string
   | Binop of bop * expr * expr

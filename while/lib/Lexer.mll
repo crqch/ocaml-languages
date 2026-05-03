@@ -32,7 +32,7 @@ rule read =
   | "=" { EQ }
   | ";" { SC }
   | number { INT (Lexing.lexeme lexbuf
-                  |> int_of_string) }
+                  |> Bigint.of_string ) }
   | ident { IDENT (Lexing.lexeme lexbuf) }
   | "(" { LPAR }
   | ")" { RPAR }

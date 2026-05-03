@@ -1,5 +1,6 @@
 (library
- (name while))
+  (name while)
+  (libraries bignum))
 
 (menhir (modules Parser))
 
