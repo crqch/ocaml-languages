@@ -14,6 +14,7 @@ rule read =
   | "false" { FALSE }
   | "if" { IF }
   | "else" { ELSE }
+  | "for" { FOR }
   | "while" { WHILE }
   | "print" { PRINT }
   | "skip" { SKIP }
