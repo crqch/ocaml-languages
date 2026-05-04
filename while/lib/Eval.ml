@@ -16,6 +16,14 @@ type value =
   | VStr of string
   | VArray of value Array.t
 
+let pure (a : 'a) : 'a option =
+  Some a
+
+let bind (o : 'a option ) (f : 'a -> 'b option ) : 'b option =
+  match o with
+  | None -> None
+  | Some v -> f v
+
 
 module Memory : sig
   type 'a t
@@ -91,24 +99,18 @@ let rec eval (e : expr) (m : memory) : value =
 
 
 
-type halting =
-  | Normal
-  | Halted
-
-let rec exec (s : stmt) (m : memory): memory * halting =
+let rec exec (s : stmt) (m : memory): memory option =
   match s with
   | Assign (x, e) ->
       let v = eval e m in
-      (Memory.add x v m, Normal)
-  | Skip -> (m, Normal)
+      pure (Memory.add x v m)
+  | Skip -> pure m
   | Cmp (s1, s2) ->
-      (match m |> exec s1 with
-      | (m, Halted) as t -> t
-      | (m, Normal) -> exec s2 m)
+      bind (exec s1 m) (fun m -> exec s2 m)
   | Print e ->
       let v = eval e m in
       print_value v;
-      (m,Normal)
+      pure m
   | If (p, t, e) ->
       let v = eval p m in
       (match v with
@@ -118,10 +120,9 @@ let rec exec (s : stmt) (m : memory): memory * halting =
   | While (p, b) ->
       let v = eval p m in
       (match v with
-       | VBool false -> (m,Normal)
-       | VBool true -> (match exec b m with
-         | (m, Halted) as t -> t
-         | (m, Normal) -> exec s m)
+       | VBool false -> pure m
+       | VBool true ->
+         bind (exec b m) (fun m -> exec s m)
        | _ -> failwith "type error")
   | ArrayWrite (x, idx, e) ->
     let idx = (match eval idx m with
@@ -136,8 +137,8 @@ let rec exec (s : stmt) (m : memory): memory * halting =
      )
     | None -> Array.empty)
     |> Array.add idx (eval e m) in
-    (Memory.add x (VArray v) m, Normal)
-  | Halt -> (m, Halted)
+    pure (Memory.add x (VArray v) m)
+  | Halt -> None
 
 let get_prio = function
   | Mult -> 2
