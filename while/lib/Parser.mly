@@ -22,6 +22,12 @@ main:
   | e = stmts; EOF { e }
   ;
 
+
+array_elems:
+  | l = expr; SC; r = array_elems { l :: r }
+  | l = expr { [l] }
+  | { [] }
+
 expr:
   | l = expr; MULT; r = expr { Binop (Mult, l, r) }
   | l = expr; DIV; r = expr { Binop (Div, l, r) }
@@ -39,7 +45,9 @@ expr:
   | s = STRING { Str s }
   | i = IDENT { Var i }
   | LPAR; e = expr; RPAR { e }
+  | LBRACE; elems = array_elems; RBRACE { Array(elems) }
   ;
+
 
 
 stmt:

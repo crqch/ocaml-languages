@@ -9,6 +9,7 @@ type expr =
   | Str of string
   | Binop of bop * expr * expr
   | Var of ident
+  | Array of expr list
 
 type stmt =
   | Assign of ident * expr

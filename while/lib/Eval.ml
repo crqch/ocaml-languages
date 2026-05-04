@@ -1,9 +1,21 @@
 open Ast
 
+
+module Array : sig
+  type 'a t
+  val empty: 'a t
+  val add : int -> 'a -> 'a t -> 'a t
+  val find_opt : int -> 'a t -> 'a option
+  val bindings : 'a t -> (int * 'a) list
+  val of_list : (int * 'a) list -> 'a t
+end = Map.Make(Int)
+
 type value =
   | VInt of Bigint.t
   | VBool of bool
   | VStr of string
+  | VArray of value Array.t
+
 
 module Memory : sig
   type 'a t
@@ -14,11 +26,20 @@ end = Map.Make(String)
 
 type memory = value Memory.t
 
+
 let rec show_value (v : value) : string =
   match v with
   | VInt a -> Bigint.to_string a
   | VBool b -> string_of_bool b
   | VStr s -> s
+  (* | VArray a -> "{" ^ (Array.fold (fun key (v: value) acc -> ((show_value v) ^ ", " ^ acc)) a "") ^ "}" *)
+  | VArray a ->
+  let show_value_nested (v : value) : string =
+    (    match v with
+    | VStr s -> "\"" ^ s ^ "\""
+    | v -> show_value v)
+  in
+  "{" ^ (let l = Array.bindings a |> List.map (snd) in List.fold_right (fun (v) acc -> (let join = match acc with "" -> "" | _ -> "; " in (show_value_nested v) ^ join ^ acc)) l "") ^ "}"
 
 let print_value (v : value) : unit =
   v |> show_value |> print_string
@@ -51,6 +72,9 @@ let rec eval (e : expr) (m : memory) : value =
   | Bool b -> VBool b
   | Str s -> VStr s
   | Binop (op, l, r) -> eval_op op (eval l m) (eval r m)
+  | Array a ->
+      let arr_map, _ = List.fold_left (fun (acc, i) e -> (Array.add i (eval e m) acc, i + 1)) (Array.empty, 0) a in
+      VArray arr_map
   | Var x ->
       begin match Memory.find_opt x m with
       | Some v -> v
@@ -122,6 +146,7 @@ let rec pretty_print_expr (root_op_prio : int) = function
     let wrap s = if delta >= 0 then s else "(" ^ s ^ ")" in
     wrap (pretty_print_expr prio l ^ op_s ^ pretty_print_expr (prio + 1) r)
   | Var x -> x
+  | Array a -> "{" ^ (List.fold_right (fun v acc -> (let join = match acc with "" -> "" | _ -> "; " in (pretty_print_expr 0 v) ^ join ^ acc)) a "") ^ "}"
 
 let rec tab_repeat i =
   if i > 0 then "  " ^ tab_repeat (i-1) else ""
