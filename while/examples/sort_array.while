@@ -1,0 +1,17 @@
+xs = {7;2;1;6;5;3;4};
+length = 7;
+print(xs);
+print("\n");
+
+for (i = 0; i < length; i = i + 1){
+    for (j = i; j < length; j = j + 1){
+    if(xs[i] > xs[j]){
+        temp = xs[i];
+        xs[i] = xs[j];
+        xs[j] = temp;
+        }
+    }
+}
+
+print(xs);
+print("\n");
