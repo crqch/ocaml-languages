@@ -1,0 +1,22 @@
+expr = { 1; 9; "+"; 2; 3; "*"; "+" };
+
+length = 7;
+stack = {};
+
+stackI = 0;
+
+for(i = 0; i < length; i = i + 1) {
+    if(expr[i] == "+"){
+        stackI = stackI - 1;
+        stack[stackI-1] = stack[stackI-1] + stack[stackI];
+    } else if(expr[i] == "*"){
+        stackI = stackI - 1;
+        stack[stackI-1] = stack[stackI-1] * stack[stackI];
+    } else {
+        stack[stackI] = expr[i];
+        stackI = stackI + 1;
+    }
+}
+
+print(stack[0]);
+print("\n");
