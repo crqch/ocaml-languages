@@ -38,6 +38,8 @@ rule read =
   | ")" { RPAR }
   | "{" { LBRACE }
   | "}" { RBRACE }
+  | "[" { LSQU }
+  | "]" { RSQU }
   | '"' { read_string (Buffer.create 16) lexbuf }
   | eof { EOF }
 

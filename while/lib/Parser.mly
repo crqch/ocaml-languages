@@ -6,7 +6,7 @@
 %token <string> IDENT
 %token <string> STRING
 %token MULT DIV ADD SUB LT LEQ GT GEQ NEQ EQEQ EQ
-%token LPAR RPAR LBRACE RBRACE SC
+%token LPAR RPAR LBRACE RBRACE LSQU RSQU SC
 %token TRUE FALSE IF ELSE WHILE FOR PRINT SKIP HALT
 %token EOF
 
@@ -46,6 +46,7 @@ expr:
   | i = IDENT { Var i }
   | LPAR; e = expr; RPAR { e }
   | LBRACE; elems = array_elems; RBRACE { Array(elems) }
+  | i = IDENT; LSQU; e = expr; RSQU { ArrayRead(i, e) }
   ;
 
 
@@ -68,6 +69,7 @@ init:
 
 step_stmt:
   | x = IDENT; EQ; e = expr { Assign (x, e) }
+  | x = IDENT; LSQU; idx = expr; RSQU; EQ; v = expr { ArrayWrite(x, idx, v) }
   | x = IDENT; MULT; EQ; e = expr { Assign(x,Binop( Mult, Var x, e )) }
   | x = IDENT; DIV; EQ; e = expr { Assign(x,Binop( Div, Var x, e )) }
   | x = IDENT; ADD; EQ; e = expr { Assign(x,Binop( Add, Var x, e )) }
@@ -89,6 +91,7 @@ matched_stmt:
   | x = IDENT; DIV; EQ; e = expr; SC { Assign(x,Binop( Div, Var x, e )) }
   | x = IDENT; ADD; EQ; e = expr; SC { Assign(x,Binop( Add, Var x, e )) }
   | x = IDENT; SUB; EQ; e = expr; SC { Assign(x,Binop( Sub, Var x, e )) }
+  | x = IDENT; LSQU; idx = expr; RSQU; EQ; v = expr; SC { ArrayWrite(x, idx, v) }
   | IF; LPAR; p = expr; RPAR; t = matched_stmt; ELSE; e = matched_stmt { If (p, t, e) }
   | WHILE; LPAR; p = expr; RPAR; b = matched_stmt { While (p, b) }
   | FOR; LPAR; i = init; cond = expr_opt; s = step_stmt; RPAR; body = matched_stmt { Cmp(i, While(cond, Cmp(body, s))) }

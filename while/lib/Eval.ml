@@ -75,6 +75,14 @@ let rec eval (e : expr) (m : memory) : value =
   | Array a ->
       let arr_map, _ = List.fold_left (fun (acc, i) e -> (Array.add i (eval e m) acc, i + 1)) (Array.empty, 0) a in
       VArray arr_map
+  | ArrayRead(x, e) ->
+    (match Memory.find_opt x m with
+    | Some v -> (match v with
+      | VArray a ->  (match Array.find_opt (match eval e m with | VInt v -> Bigint.to_int_exn v | _ -> failwith "type error") a with
+      | Some v -> v
+      | None -> VInt Bigint.zero)
+    | _ -> failwith "type error: array read called on non array")
+    | None -> VInt Bigint.zero)
   | Var x ->
       begin match Memory.find_opt x m with
       | Some v -> v
@@ -115,6 +123,20 @@ let rec exec (s : stmt) (m : memory): memory * halting =
          | (m, Halted) as t -> t
          | (m, Normal) -> exec s m)
        | _ -> failwith "type error")
+  | ArrayWrite (x, idx, e) ->
+    let idx = (match eval idx m with
+      | VInt v -> Bigint.to_int_exn v
+      | _ -> failwith "type error: not a number passed as array key"
+    ) in
+
+    let v = (match Memory.find_opt x m with
+    | Some v -> (match v with
+      | VArray a -> a
+      | _ -> Array.empty
+     )
+    | None -> Array.empty)
+    |> Array.add idx (eval e m) in
+    (Memory.add x (VArray v) m, Normal)
   | Halt -> (m, Halted)
 
 let get_prio = function
@@ -147,6 +169,7 @@ let rec pretty_print_expr (root_op_prio : int) = function
     wrap (pretty_print_expr prio l ^ op_s ^ pretty_print_expr (prio + 1) r)
   | Var x -> x
   | Array a -> "{" ^ (List.fold_right (fun v acc -> (let join = match acc with "" -> "" | _ -> "; " in (pretty_print_expr 0 v) ^ join ^ acc)) a "") ^ "}"
+  | ArrayRead(x, e) -> x ^ "[" ^ (pretty_print_expr 0 e) ^ "]"
 
 let rec tab_repeat i =
   if i > 0 then "  " ^ tab_repeat (i-1) else ""
@@ -155,6 +178,7 @@ let rec pretty_print (level: int) stmt =
   let tabs = tab_repeat(level) in
   match stmt with
   | Assign (x, e) -> tabs ^ x ^ " = " ^ pretty_print_expr 0 e ^ ";\n"
+  | ArrayWrite(x, idx, e) -> x ^ "[" ^ pretty_print_expr 0 e ^ "] = " ^ pretty_print_expr 0 e ^ ";\n"
   | Skip -> tabs ^ "skip;\n"
   | Cmp (s1, s2) ->
     if level == 0 then

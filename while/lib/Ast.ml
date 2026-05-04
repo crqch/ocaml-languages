@@ -10,6 +10,7 @@ type expr =
   | Binop of bop * expr * expr
   | Var of ident
   | Array of expr list
+  | ArrayRead of ident * expr
 
 type stmt =
   | Assign of ident * expr
@@ -19,3 +20,4 @@ type stmt =
   | If of expr * stmt * stmt
   | While of expr * stmt
   | Print of expr
+  | ArrayWrite of ident * expr * expr
